@@ -228,6 +228,17 @@
                   "packages" : { "yum" : ["docker"] }
                 }
               }
+            },
+            "commands" : {
+              "01_fetch_codedeploy_agent" : {
+                "command" : {"Fn::Join" : ["", ["aws s3 cp s3://aws-codedeploy-", { "Ref" : "AWS::Region" }, "/latest/install /tmp --region ", { "Ref" : "AWS::Region" }]]}
+              },
+              "02_run_codedeploy_agent" : {
+                "command" : "chmod +x /tmp/install && /tmp/install auto"
+              },
+              "installChef" : {
+                "command" : "curl -L https://www.chef.io/chef/install.sh | sudo bash"
+              }
             }
           }
         }
@@ -274,7 +285,7 @@
           { "Ref" : "SubnetD" }
         ],
         "MinSize" : "1",
-        "MaxSize" : "1",
+        "MaxSize" : "10",
         "LoadBalancerNames" : [ { "Ref" : "ClusterELB" } ],
         "Tags" : [
           { "Key" : "Name", "Value" : "ecs-cluster", "PropagateAtLaunch" : "true" }
