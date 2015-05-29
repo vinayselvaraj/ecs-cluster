@@ -1,5 +1,10 @@
 version: 0.0
 os: linux 
 files:
-  - source: /ecs-cluster-cfn.json
-    destination: /tmp
+  - source: /chef
+    destination: /chef
+
+hooks:
+  AfterInstall:
+    - location: /chef/solo.sh
+      timeout: 1800
