@@ -215,20 +215,6 @@
       "Metadata" : {
         "AWS::CloudFormation::Init" : {
           "config" : {
-            "packages" : {
-              "yum" : {
-                "docker" : []
-              }
-            },
-            "services" : {
-              "sysvinit" : {
-                "docker" : {
-                  "enabled" : "true",
-                  "ensureRunning" : "true",
-                  "packages" : { "yum" : ["docker"] }
-                }
-              }
-            },
             "commands" : {
               "01_fetch_codedeploy_agent" : {
                 "command" : {"Fn::Join" : ["", ["aws s3 cp s3://aws-codedeploy-", { "Ref" : "AWS::Region" }, "/latest/install /tmp --region ", { "Ref" : "AWS::Region" }]]}

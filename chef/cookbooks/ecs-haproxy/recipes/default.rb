@@ -7,3 +7,18 @@ service "docker" do
   action [ :enable, :start ]
 end
 
+service "ecs-agent" do
+  supports :restart => true, :start => true, :stop => true, :reload => true
+  action :nothing
+end
+
+template "ecs-agent" do
+  path "/etc/init.d/ecs-agent"
+  source "ecs-agent-init.erb"
+  owner "root"
+  gorup "root"
+  mode "0755"
+  notifies :enable, "service[ecs-agent]"
+  notifies :start, "service[ecs-agent]"
+end
+
