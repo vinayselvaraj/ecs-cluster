@@ -16,7 +16,7 @@ template "ecs-agent" do
   path "/etc/init.d/ecs-agent"
   source "ecs-agent-init.erb"
   owner "root"
-  gorup "root"
+  group "root"
   mode "0755"
   notifies :enable, "service[ecs-agent]"
   notifies :start, "service[ecs-agent]"
