@@ -1,6 +1,5 @@
 # ecs-haproxy-cassandra-cluster-cookbook
 
-TODO: Enter the cookbook description here.
 
 ## Supported Platforms
 
@@ -39,4 +38,4 @@ Include `ecs-haproxy-cassandra-cluster` in your node's `run_list`:
 
 ## License and Authors
 
-Author:: YOUR_NAME (<YOUR_EMAIL>)
+Author:: Vinay Selvaraj (vinay@selvaraj.com)
