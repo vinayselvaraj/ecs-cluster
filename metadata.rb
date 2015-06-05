@@ -1,6 +1,6 @@
 name             'ecs-haproxy-cassandra-cluster'
-maintainer       'YOUR_NAME'
-maintainer_email 'YOUR_EMAIL'
+maintainer       'Vinay Selvaraj'
+maintainer_email 'vinay@selvaraj.com'
 license          'All rights reserved'
 description      'Installs/Configures ecs-haproxy-cassandra-cluster'
 long_description 'Installs/Configures ecs-haproxy-cassandra-cluster'
