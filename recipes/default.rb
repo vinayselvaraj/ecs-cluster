@@ -9,3 +9,4 @@
 
 include_recipe 'java'
 include_recipe 'haproxy'
+include_recipe 'cassandra::datastax'

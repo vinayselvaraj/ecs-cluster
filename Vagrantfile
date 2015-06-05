@@ -27,6 +27,11 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # config.vm.box_url doesn't need to be specified.
   config.vm.box = 'chef/centos-6.5'
 
+  config.vm.provider "virtualbox" do |v|
+    v.memory = 4096
+    v.cpus = 2
+  end
+
 
   # Assign this VM to a host-only network IP, allowing you to access it
   # via the IP. Host-only networks can talk to the host machine as well as

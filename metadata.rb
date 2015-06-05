@@ -8,3 +8,4 @@ version          '0.1.0'
 
 depends           'haproxy', '~> 1.6.6'
 depends           'java', '~> 1.31.0'
+depends           'cassandra'
