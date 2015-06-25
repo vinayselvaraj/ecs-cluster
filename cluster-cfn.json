@@ -4,14 +4,19 @@
   "Description" : "ECS Cluster CloudFormation Template",
   
   "Parameters" : {
-    "MasterInstanceType" : {
+    "VpnInstanceType" : {
+      "Description" : "VPN Instance Type",
+      "Type" : "String",
+      "Default" : "t2.micro"
+    },
+    "ClusterInstanceType" : {
       "Description" : "Cluster Instance Type",
       "Type" : "String",
       "Default" : "t2.medium"
     },
     "KeyName" : {
       "Description" : "The EC2 Key Pair to allow SSH access to the instances",
-      "Type" : "String",
+      "Type" : "AWS::EC2::KeyPair::KeyName",
       "Default" : "default"
     }
   },
@@ -137,6 +142,54 @@
       }
     },
     
+    "VpnIAMRole" : {
+      "Type": "AWS::IAM::Role",
+      "Properties" : {
+        "AssumeRolePolicyDocument" : {
+          "Version" : "2012-10-17",
+          "Statement" : [ {
+            "Effect" : "Allow",
+            "Principal" : {
+              "Service" : [ "ec2.amazonaws.com" ]
+            },
+            "Action" : [ "sts:AssumeRole" ]
+          }]
+        },
+        
+        "Path" : "/",
+        
+        "Policies" : [ {
+          "PolicyName" : "VpnServerPolicy",
+          "PolicyDocument" : {
+            "Version" : "2012-10-17",
+            "Statement" : [
+              {
+                "Effect":"Allow",
+                "Action": [
+                  "ec2:AssociateAddress",
+                  "ec2:DisassociateAddress"
+                ],
+                "Resource":"*"
+              },
+              {
+                "Effect":"Deny",
+                "Action":"iam:*",
+                "Resource":"*"
+              }
+            ]
+          }
+        }]
+      }
+    },
+    
+    "VpnInstProfile" : {
+      "Type": "AWS::IAM::InstanceProfile",
+      "Properties" : {
+        "Path" : "/",
+        "Roles" : [ { "Ref" : "VpnIAMRole" } ]
+      }
+    },
+    
     "VpnSG" : {
       "Type" : "AWS::EC2::SecurityGroup",
       "Properties" : {
@@ -160,6 +213,99 @@
       "Type" : "AWS::EC2::EIP",
       "Properties" : {
         "Domain" : "vpc"
+      }
+    },
+    
+    "VpnLaunchConfig" : {
+      "Type" : "AWS::AutoScaling::LaunchConfiguration",
+      "Metadata" : {
+        "AWS::CloudFormation::Init" : {
+          "config" : {
+            "packages" : {
+              "yum" : {
+                "openvpn" : []
+              }
+            },
+            "files" : {
+              "/tmp/associate_eip.sh" : {
+                "content" : { "Fn::Join" : ["", [
+                  "#!/bin/bash\n",
+                  "INSTANCE_ID=`curl -s  http://169.254.169.254/latest/meta-data/instance-id`\n",
+                  "ALLOCATION_ID=", { "Fn::GetAtt" : [ "VpnEip", "AllocationId" ]}, "\n",
+                  "EC2_REGION=", { "Ref": "AWS::Region"}, "\n",
+                  "aws ec2 --region $EC2_REGION associate-address --allocation-id $ALLOCATION_ID --instance-id $INSTANCE_ID --allow-reassociation\n"
+                ]]},
+                "mode" : "000755",
+                "owner" : "root",
+                "group" : "root"
+              },
+              "/tmp/setup.sh" : {
+                "content" : { "Fn::Join" : ["", [
+                  "#!/bin/bash\n",
+                  "until /tmp/associate_eip.sh\n",
+                  "do\n",
+                  "sleep 15\n",
+                  "done\n"
+                ]]},
+                "mode" : "000755",
+                "owner" : "root",
+                "group" : "root"
+              }
+            },
+            "commands" : {
+              "runSetup" : {
+                "command" : "/tmp/setup.sh"
+              }
+            }
+          }
+        }
+      },
+      "Properties" : {
+        "KeyName" : { "Ref" : "KeyName" },
+        "AssociatePublicIpAddress" : "true",
+        "IamInstanceProfile" : { "Ref" : "VpnInstProfile" },
+        "ImageId" : {
+          "Fn::FindInMap" : [
+            "AWSRegionArch2AMI",
+            { "Ref" : "AWS::Region" },
+            "AMI"
+          ]
+        },
+        "InstanceType" : { "Ref" : "VpnInstanceType" },
+        "SecurityGroups" : [ { "Ref" : "VpnSG" } ],
+        "UserData"        : {
+          "Fn::Base64": {
+            "Fn::Join": [
+              "",
+              [
+                "#!/bin/bash\n",
+                "/opt/aws/bin/cfn-init --region ", 
+                  { "Ref": "AWS::Region"}, 
+                  " -s ", { "Ref" : "AWS::StackName" }, 
+                  " -r VpnLaunchConfig"
+              ]
+            ]
+          }
+        }
+      }
+    },
+    
+    "VpnAutoScalingGroup" : {
+      "Type" : "AWS::AutoScaling::AutoScalingGroup",
+      "Properties" : {
+        "AvailabilityZones" : { "Fn::GetAZs" : "" },
+        "LaunchConfigurationName" : { "Ref" : "VpnLaunchConfig" },
+        "VPCZoneIdentifier" : [ 
+          { "Ref" : "SubnetA" },
+          { "Ref" : "SubnetB" },
+          { "Ref" : "SubnetC" },
+          { "Ref" : "SubnetD" }
+        ],
+        "MinSize" : "1",
+        "MaxSize" : "1",
+        "Tags" : [
+          { "Key" : "Name", "Value" : "vpn-server", "PropagateAtLaunch" : "true" }
+        ]
       }
     },
     
@@ -274,7 +420,7 @@
             "AMI"
           ]
         },
-        "InstanceType" : { "Ref" : "MasterInstanceType" },
+        "InstanceType" : { "Ref" : "ClusterInstanceType" },
         "SecurityGroups" : [ { "Ref" : "ClusterSG" } ],
         "UserData"        : {
           "Fn::Base64": {
