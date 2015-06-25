@@ -137,6 +137,32 @@
       }
     },
     
+    "VpnSG" : {
+      "Type" : "AWS::EC2::SecurityGroup",
+      "Properties" : {
+        "GroupDescription" : "VPN Security Group",
+        "VpcId" : { "Ref" : "VPC" }
+      }
+    },
+    
+    "VpnSGSelfIngress" : {
+      "Type" : "AWS::EC2::SecurityGroupIngress",
+      "Properties" : {
+        "GroupId" : { "Ref" : "VpnSG" },
+        "IpProtocol" : "-1",
+        "ToPort" : "65535",
+        "FromPort" : "0",
+        "SourceSecurityGroupId" : { "Ref" : "VpnSG" }
+      }
+    },
+    
+    "VpnEip" : {
+      "Type" : "AWS::EC2::EIP",
+      "Properties" : {
+        "Domain" : "vpc"
+      }
+    },
+    
     "ClusterSG" : {
       "Type" : "AWS::EC2::SecurityGroup",
       "Properties" : {
@@ -153,6 +179,17 @@
         "ToPort" : "65535",
         "FromPort" : "0",
         "SourceSecurityGroupId" : { "Ref" : "ClusterSG" }
+      }
+    },
+    
+    "ClusterSGVpnIngress" : {
+      "Type" : "AWS::EC2::SecurityGroupIngress",
+      "Properties" : {
+        "GroupId" : { "Ref" : "ClusterSG" },
+        "IpProtocol" : "-1",
+        "ToPort" : "65535",
+        "FromPort" : "0",
+        "SourceSecurityGroupId" : { "Ref" : "VpnSG" }
       }
     },
     
