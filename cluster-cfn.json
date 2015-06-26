@@ -209,6 +209,37 @@
       }
     },
     
+    "VpnSGSelfIngressUdp4500" : {
+      "Type" : "AWS::EC2::SecurityGroupIngress",
+      "Properties" : {
+        "GroupId" : { "Ref" : "VpnSG" },
+        "IpProtocol" : "udp",
+        "ToPort" : "4500",
+        "FromPort" : "4500",
+        "SourceSecurityGroupId" : { "Ref" : "VpnSG" }
+      }
+    },
+    
+    "VpnSGSelfIngressUdp500" : {
+      "Type" : "AWS::EC2::SecurityGroupIngress",
+      "Properties" : {
+        "GroupId" : { "Ref" : "VpnSG" },
+        "IpProtocol" : "udp",
+        "ToPort" : "500",
+        "FromPort" : "500",
+        "SourceSecurityGroupId" : { "Ref" : "VpnSG" }
+      }
+    },
+    
+    "VpnSGSelfIngressIp50" : {
+      "Type" : "AWS::EC2::SecurityGroupIngress",
+      "Properties" : {
+        "GroupId" : { "Ref" : "VpnSG" },
+        "IpProtocol" : "50",
+        "SourceSecurityGroupId" : { "Ref" : "VpnSG" }
+      }
+    },
+    
     "VpnEip" : {
       "Type" : "AWS::EC2::EIP",
       "Properties" : {
@@ -242,10 +273,15 @@
               "/tmp/setup.sh" : {
                 "content" : { "Fn::Join" : ["", [
                   "#!/bin/bash\n",
+                  
                   "until /tmp/associate_eip.sh\n",
                   "do\n",
                   "sleep 15\n",
-                  "done\n"
+                  "done\n",
+                  
+                  "#Setup OpenVPN\n",
+                  "openvpn --genkey --secret /etc/openvpn/openvpn-key.txt\n"
+                  
                 ]]},
                 "mode" : "000755",
                 "owner" : "root",
